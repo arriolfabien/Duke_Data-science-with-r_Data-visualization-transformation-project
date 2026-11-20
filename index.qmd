@@ -1,12 +1,12 @@
 ---
-title: "Project"
+title: "Duke University - Data Science with R <br> Data Visualization and Transformation with R"
 author: "Fabien Arriol"
 subtitle: "Investigation into Chicago taxis"
-echo: false
+echo: true
 bibliography: references.bib
 ---
 
-## Packages 
+## Packages
 
 ```{r}
 #| warning: false
@@ -16,12 +16,72 @@ library(tidymodels)
 library(scales)
 ```
 
+## Preparation work
+
+Create `tip_bool` , a boolean version of the original variable `tip` (TRUE or FALSE instead of YES or NO)
+
+Glimpse updated data frame : `my_taxi`
+
+```{r}
+#| label: create tip a real boolean (TRUE or FALSE) and glimpse my_taxi
+my_taxi <- taxi |>
+    mutate(tip_bool = if_else(tip == "yes", TRUE, FALSE))
+
+glimpse(my_taxi)
+```
+
 ## Question 1
 
+**Is there there a relationship between the distance (in miles) someone travels in a taxi and if they tip or not?**
 
-## Question 2 
+The distance (in miles) someone travels in a taxi is defined by the variable **`distance`**.
 
+**`distance`** is a continuous numerical variable.
 
-## Your own question 
+The action of tipping (or not) is defined by the variable **`tip`**.
 
+**`tip_bool`** is a boolean variable.
 
+```{r}
+my_taxi |>
+    ggplot(aes(x = distance, y = as.numeric(tip_bool))) +
+    geom_jitter(height = 0.05, alpha = 0.4) + 
+    geom_smooth(method = "glm", method.args = list(family = "binomial")) +
+    labs(x = "Distance in miles", y = "Probability of tipping")
+```
+
+```{r}
+my_taxi |>
+    ggplot(aes(x = distance, y = tip_bool, color = tip_bool, fill = tip_bool)) +
+    geom_boxplot(alpha = 0.5, show.legend = FALSE) +
+    labs(x = "Distance in miles", y = "Tipping (TRUE) or Not Tipping (FALSE)")
+```
+
+There seems to be a **positive relationship between the distance someone travels in a taxi and their tipping behavior** : even though most people do tip, we can see that this tendency grows positively when the distance increases.
+
+## Question 2
+
+**Do taxi passengers tend to tip more for the company Chicago Independents than the other companies?**
+
+```{r}
+my_taxi |>
+    ggplot(aes(y = company, fill = tip_bool)) +
+    geom_bar(position = "fill") +
+    labs(x = "Tipping ratio", y = "Company name") +
+    scale_fill_discrete(name = "Tipping behavior", labels = c("FALSE" = "Not tipping", "TRUE" = "Tipping"))
+```
+
+```{r}
+my_taxi |>
+    mutate(chicago_company = if_else(company == "Chicago Independents", "Chicago Independents", "Other Companies")) |>
+    ggplot(aes(x = chicago_company, fill = tip_bool)) +
+    geom_bar(position = "fill") +
+    labs(x = "", y = "Tipping ratio") +
+    scale_fill_discrete(name = "Tipping behavior", labels = c("FALSE" = "Not tipping", "TRUE" = "Tipping"))
+```
+
+Yes, taxi passengers clearly tend to tip more with **Chicago Independents** than with other companies:
+
+- not only do they tip more often than the **overall average of other companies**,
+
+- but they also tip more often than passengers of **any individual competing company**
